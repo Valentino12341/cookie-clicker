@@ -1,0 +1,108 @@
+import pygame
+import os
+import sys
+import json
+
+
+
+def save_game_data(total_cookies, cookie_persec, bought1, cookie_perclick):
+    with open("save_data.json","w") as file:
+        json.dump({"TOTAL_COOKIES": total_cookies, "cookie_persec": cookie_persec,"bought1":bought1,"cookie_perclick":cookie_perclick},file)
+
+def load_game_data():
+    if os.path.exists("save_data.json"):
+        with open("save_data.json", "r") as file:
+            data = json.load(file)
+            return data.get("TOTAL_COOKIES",0),data.get("cookie_persec",0), data.get("bought1",0),data.get("cookie_perclick",0)
+    return 0,0,0,1
+
+pygame.init()
+
+
+
+sc = pygame.display.set_mode((800,800))
+pygame.display.set_caption("sprites test")
+
+cookie = pygame.image.load("cookie.jpg")
+cookie1 = cookie.get_rect()
+cookie1.center = (400,400)
+
+click1 = pygame.image.load("+1click.png")
+click11 = click1.get_rect()
+click11.center = (702, 220)
+
+text = pygame.image.load("+1.png")
+text1 = text.get_rect()
+text1.center = (702, 175)
+
+TOTAL_COOKIES, cookie_persec, bought1, cookie_perclick = load_game_data()
+
+
+
+
+running = True
+clock = pygame.time.Clock()
+ctm = 0
+font = pygame.font.SysFont('Times New Roman', 36)
+
+while running:
+    dt = clock.tick(30)
+
+    ctm += dt
+
+    if ctm >= 1000:
+        TOTAL_COOKIES += cookie_persec
+        ctm = 0
+
+
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            save_game_data(TOTAL_COOKIES,cookie_persec,bought1,cookie_perclick)
+            pygame.quit()
+            sys.exit()
+
+        if event.type == pygame.MOUSEBUTTONDOWN:
+            mouse_pos = pygame.mouse.get_pos()
+            print(mouse_pos)
+            if cookie1.collidepoint(mouse_pos):
+                print("cookie clicked!")
+                TOTAL_COOKIES += 1
+                print(TOTAL_COOKIES)
+
+            if click11.collidepoint(mouse_pos):
+                print("+1 per click")
+                if TOTAL_COOKIES >= 50:
+                    print("bought")
+                    TOTAL_COOKIES -= 50
+                    cookie_perclick +=1
+            
+
+            if text1.collidepoint(mouse_pos):
+                print("+1 clicked ")
+                if TOTAL_COOKIES >= 10:
+                    print("+1 cookie bought ")
+                    TOTAL_COOKIES -= 10
+                    cookie_persec += 1
+                    bought1 += 1
+                
+    sc.fill((255,255,255))
+
+
+    sc.blit(cookie,cookie1)
+    sc.blit(text,text1)
+    sc.blit(click1,click11)
+
+
+
+    
+    cookie_text = font.render(f"Total cookies: {TOTAL_COOKIES}",True,(0,0,0))
+    cps_text = font.render(f"cookies per sec:{cookie_persec}",True,(0,0,0))
+    sc.blit(cookie_text, (20,20))
+    sc.blit(cps_text,(20,60))
+
+    pygame.display.update()
+    
+    
+
+
+pygame.quit()
