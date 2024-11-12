@@ -2,19 +2,20 @@ import pygame
 import os
 import sys
 import json
+from random import choice
 
 
 
-def save_game_data(total_cookies, cookie_persec, bought1, cookie_perclick):
+def save_game_data(total_cookies, cookie_persec, bought1_cps, cookie_perclick, price1,price2):
     with open("save_data.json","w") as file:
-        json.dump({"TOTAL_COOKIES": total_cookies, "cookie_persec": cookie_persec,"bought1":bought1,"cookie_perclick":cookie_perclick},file)
+        json.dump({"TOTAL_COOKIES": total_cookies, "cookie_persec": cookie_persec,"bought1_cps":bought1_cps,"cookie_perclick":cookie_perclick,"price1":price1,"price2":price2},file)
 
 def load_game_data():
     if os.path.exists("save_data.json"):
         with open("save_data.json", "r") as file:
             data = json.load(file)
-            return data.get("TOTAL_COOKIES",0),data.get("cookie_persec",0), data.get("bought1",0),data.get("cookie_perclick",0)
-    return 0,0,0,1
+            return data.get("TOTAL_COOKIES",0),data.get("cookie_persec",0), data.get("bought1_cps",0),data.get("cookie_perclick",0),data.get("price1",0),data.get("price2",0)
+    return 0,0,0,0,0,0
 
 pygame.init()
 
@@ -23,19 +24,35 @@ pygame.init()
 sc = pygame.display.set_mode((800,800))
 pygame.display.set_caption("sprites test")
 
-cookie = pygame.image.load("cookie.jpg")
+reset = pygame.image.load("reset.png") #RESET BUTTON
+reset1 = reset.get_rect()
+reset1.center = (700,20)
+
+plus_10_sec = pygame.image.load("+10cookie.png") # +10 BUTTON per sec
+plus_10_sec1 = plus_10_sec.get_rect()
+plus_10_sec1.center = (710, 270)
+
+cookie = pygame.image.load("cookie.jpg") # THE COOKIE 
 cookie1 = cookie.get_rect()
 cookie1.center = (400,400)
 
-click1 = pygame.image.load("+1click.png")
+click1 = pygame.image.load("+1click.png") # +1CLICK 
 click11 = click1.get_rect()
 click11.center = (702, 220)
 
-text = pygame.image.load("+1.png")
+text = pygame.image.load("+1.png")# +1 COOKIE PER CLICK 
 text1 = text.get_rect()
 text1.center = (702, 175)
 
-TOTAL_COOKIES, cookie_persec, bought1, cookie_perclick = load_game_data()
+click2 = pygame.image.load("click+10.png")# +10 cookies  per click
+click22 = click2.get_rect()
+click22.center = (702, 140)
+
+pl_100_cps = pygame.image.load("+100cookiessec.png")
+pl_100_cps1 = pl_100_cps.get_rect()
+pl_100_cps1.center = (710, 310) 
+
+TOTAL_COOKIES, cookie_persec, bought1_cps, cookie_perclick, price1, price2 = load_game_data()
 
 
 
@@ -44,9 +61,18 @@ running = True
 clock = pygame.time.Clock()
 ctm = 0
 font = pygame.font.SysFont('Times New Roman', 36)
-
+font2 = pygame.font.SysFont('Times New Roman', 16)
 while running:
+    if price1 == 0:
+        price1 +=10
     dt = clock.tick(30)
+    if price2 == 0:
+        price2	+= 100
+    if bought1_cps == 0:
+        bought1_cps += 50
+
+    if TOTAL_COOKIES < 0:
+        TOTAL_COOKIES *= 0
 
     ctm += dt
 
@@ -57,33 +83,75 @@ while running:
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
-            save_game_data(TOTAL_COOKIES,cookie_persec,bought1,cookie_perclick)
+            save_game_data(TOTAL_COOKIES,cookie_persec,bought1_cps,cookie_perclick,price2,price1)
             pygame.quit()
             sys.exit()
 
         if event.type == pygame.MOUSEBUTTONDOWN:
             mouse_pos = pygame.mouse.get_pos()
-            print(mouse_pos)
-            if cookie1.collidepoint(mouse_pos):
+            #print(mouse_pos)
+            if cookie1.collidepoint(mouse_pos): # click the cookie
                 print("cookie clicked!")
-                TOTAL_COOKIES += 1
+                TOTAL_COOKIES += cookie_perclick
                 print(TOTAL_COOKIES)
+                
 
-            if click11.collidepoint(mouse_pos):
+            if click11.collidepoint(mouse_pos):# +1 CLICK PER SEC 
                 print("+1 per click")
-                if TOTAL_COOKIES >= 50:
+                if TOTAL_COOKIES >= bought1_cps:
                     print("bought")
-                    TOTAL_COOKIES -= 50
-                    cookie_perclick +=1
+                    TOTAL_COOKIES -= bought1_cps
+                    bought1_cps *= 1.1
+                    cookie_perclick += 1
             
 
-            if text1.collidepoint(mouse_pos):
+            if text1.collidepoint(mouse_pos): # +1 TEXT per click
                 print("+1 clicked ")
-                if TOTAL_COOKIES >= 10:
+                if TOTAL_COOKIES >= price1:
                     print("+1 cookie bought ")
-                    TOTAL_COOKIES -= 10
+                    TOTAL_COOKIES -= price1
+                    price1 *= choice([1.1,1.2,1.3,])
                     cookie_persec += 1
-                    bought1 += 1
+                    
+
+            if reset1.collidepoint(mouse_pos): # RESET BUTTON 
+                print("ok il reset for u ")
+                TOTAL_COOKIES *= 0
+                cookie_persec *= 0
+                bought1_cps *= 0
+                price1 *= 0
+                price1 += 10
+                cookie_perclick *=  0
+                cookie_perclick += 1
+                price2 *= 0
+                print("fully reseted ")
+
+
+            if plus_10_sec1.collidepoint(mouse_pos): # PRICE +10 per click
+                print("u want to buy +10 ")
+                if TOTAL_COOKIES >= price2:
+                    price2 *= choice([1.1,1.2,1.3,])
+                    TOTAL_COOKIES -= price2
+                    cookie_persec += 10
+
+            if click22.collidepoint(mouse_pos):#price +10 per click
+                print("u want to buy ") 
+                if TOTAL_COOKIES >= 1000:
+                    print("bought ")
+                    TOTAL_COOKIES -= 1000
+                    cookie_perclick += 10
+
+            if pl_100_cps1.collidepoint(mouse_pos):
+                print("bought")
+                if TOTAL_COOKIES >= 10000:
+                    print("bought")
+                    TOTAL_COOKIES -= 10000
+                    cookie_persec += 100
+
+
+                
+                
+
                 
     sc.fill((255,255,255))
 
@@ -91,18 +159,28 @@ while running:
     sc.blit(cookie,cookie1)
     sc.blit(text,text1)
     sc.blit(click1,click11)
+    sc.blit(reset, reset1)
+    sc.blit(plus_10_sec,plus_10_sec1)
+    sc.blit(click2,click22)
+    sc.blit(pl_100_cps,pl_100_cps1)
 
 
 
     
-    cookie_text = font.render(f"Total cookies: {TOTAL_COOKIES}",True,(0,0,0))
-    cps_text = font.render(f"cookies per sec:{cookie_persec}",True,(0,0,0))
-    sc.blit(cookie_text, (20,20))
-    sc.blit(cps_text,(20,60))
+    cookie_text = font.render(f"Total cookies: {int(TOTAL_COOKIES)}",True,(0,0,0))# all the cookies 
+    cps_text = font.render(f"cookies per sec:{cookie_persec}",True,(0,0,0))# clcicks per sec 
+    price1_text = font2.render(f"PRICE:{int(price1)}",True,(0,0,0))#price of the +1
+    text2_text = font2.render(f"PRICE{int(price2)}",True,(0,0,0))#price of the +10
+    text_cookie_perclick = font2.render(f"price{int(bought1_cps)}",True,(0,0,0))# price cookie per click 
+    sc.blit(cookie_text, (20,20))# total cookies
+    sc.blit(cps_text,(20,60))# cookie per sec 
+    sc.blit(price1_text,(552, 165))#price of +1
+    sc.blit(text2_text,(557, 262))# price of the +10
+    sc.blit(text_cookie_perclick,(552,210))#price of cookie per click 
 
     pygame.display.update()
     
-    
+
 
 
 pygame.quit()
